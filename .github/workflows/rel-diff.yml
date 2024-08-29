@@ -4,7 +4,7 @@ on:
   release: 
     types: [published, edited]
     branches:
-      - master
+      - Master
 
 jobs:
   diff_published:
@@ -33,13 +33,19 @@ jobs:
       - name: Read release tags
         id: read_tags
         run: |
-          tags=$(cat tags.txt)
-          echo "Tags: $tags"
-          echo "tags = $tags >> $GITHUB_ENV"
-      
-      - name: logout github 
-        run: |
-            gh auth logout
+          latest_tag=$(awk '{print $1}' tags.txt | head -n 1)
+          previous_tag=$(awk '{print $1}' tags.txt | head -n 2 | tail -n 1)
+          
+          echo "_______________________________"
+          echo "Latest Tag: $latest_tag"
+          echo "Previous Tag: $previous_tag"
+          echo "_______________________________"
+          
+          # Set environment variables
+          echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
+          echo "PREVIOUS_TAG=$previous_tag" >> $GITHUB_ENV
+
+
     #   - name: Perform diff between releases
     #     run: |
     #       tags=(${ { steps.read_tags.outputs.tags } })
