@@ -9,13 +9,16 @@ on:
 jobs:
   diff_published:
     runs-on: ubuntu-latest
-    outputs:
-      changedfiles: ${{ steps.set-changed-files.outputs.changedfiles }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all tags and history
+          fetch-depth: 0 # Fetch all history and tags
+
+      - name: Set up GitHub CLI
+        uses: cli/cli@v2
+        with:
+          version: 'latest'
 
       - name: Get the current release information
         id: get_current_release
@@ -27,9 +30,15 @@ jobs:
       - name: Get previous release
         id: get_previous_release
         run: |
-          PREVIOUS_RELEASE=$(gh release list --json tagName,createdAt --jq '.[] | select(.tagName != "${{ env.current_release }}") | .tagName' | head -n 1)
+          # List releases and get the previous one
+          PREVIOUS_RELEASE=$(gh release list --json tagName --jq '.[] | select(.tagName != env.current_release) | .tagName' | head -n 1)
           echo "previous_release=$PREVIOUS_RELEASE" >> $GITHUB_ENV
           echo "Previous Release is: $PREVIOUS_RELEASE"
+
+      - name: Check environment variables
+        run: |
+          echo "current_release=${{ env.current_release }}"
+          echo "previous_release=${{ env.previous_release }}"
 
       - name: Get list of changed files
         id: set-changed-files
@@ -38,10 +47,11 @@ jobs:
             echo "No previous release found, skipping diff."
             echo "changedfiles=[]" >> $GITHUB_OUTPUT
           else
-            # Get the commits for the previous and current releases
-            PREV_COMMIT=$(gh release view ${{ env.previous_release }} --json targetCommitish -q ".targetCommitish")
-            CURRENT_COMMIT=$(gh release view ${{ env.current_release }} --json targetCommitish -q ".targetCommitish")
-            
+            # Get the commit hashes for the previous and current releases
+            PREV_COMMIT=$(gh release view ${{ env.previous_release }} --json targetCommitish --jq '.targetCommitish')
+            CURRENT_COMMIT=$(gh release view ${{ env.current_release }} --json targetCommitish --jq '.targetCommitish')
+
+            # Perform the diff
             changedfiles=$(git diff --name-only $PREV_COMMIT $CURRENT_COMMIT | uniq | jq -R -s -c 'split("\n")[:-1]')
             echo "changedfiles=$changedfiles" >> $GITHUB_OUTPUT
           fi
