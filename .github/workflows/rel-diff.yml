@@ -35,15 +35,18 @@ jobs:
         run: |
           tags=$(cat tags.txt)
           echo "Tags: $tags"
-          echo "::set-output name=tags::$tags"
-
-      - name: Perform diff between releases
+          echo "tags = $tags >> $GITHUB_ENV"
+      
+      - name: logout github 
         run: |
-          tags=(${ { steps.read_tags.outputs.tags } })
-          if [ ${ #tags[@] } -ge 2 ]; then
-            echo "Comparing ${tags[0]} and ${tags[1]}"
-            git diff ${tags[0]} ${tags[1]} > diff.txt
-            cat diff.txt
-          else
-            echo "Not enough tags to perform a diff."
-          fi
+            gh auth logout
+    #   - name: Perform diff between releases
+    #     run: |
+    #       tags=(${ { steps.read_tags.outputs.tags } })
+    #       if [ ${ #tags[@] } -ge 2 ]; then
+    #         echo "Comparing ${tags[0]} and ${tags[1]}"
+    #         git diff ${tags[0]} ${tags[1]} > diff.txt
+    #         cat diff.txt
+    #       else
+    #         echo "Not enough tags to perform a diff."
+    #       fi
