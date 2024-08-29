@@ -16,46 +16,27 @@ jobs:
           fetch-depth: 0 # Fetch all history and tags
 
       - name: Set up GitHub CLI
-        uses: cli/cli@v4
-        with:
-          version: 'latest'
+        uses: cli/cli@v2
 
-      - name: Get the current release information
-        id: get_current_release
+      - name: Fetch release information
+        id: fetch_releases
         run: |
-          CURRENT_RELEASE=${{ github.event.release.tag_name }}
-          echo "current_release=$CURRENT_RELEASE" >> $GITHUB_ENV
-          echo "Current Release is: $CURRENT_RELEASE"
+          gh release list --json tagName --jq '.[] | .tagName' > tags.txt
 
-      - name: Get previous release
-        id: get_previous_release
+      - name: Read release tags
+        id: read_tags
         run: |
-          # List releases and get the previous one
-          PREVIOUS_RELEASE=$(gh release list --json tagName --jq '.[] | select(.tagName != env.current_release) | .tagName' | head -n 1)
-          echo "previous_release=$PREVIOUS_RELEASE" >> $GITHUB_ENV
-          echo "Previous Release is: $PREVIOUS_RELEASE"
+          tags=$(cat tags.txt)
+          echo "Tags: $tags"
+          echo "::set-output name=tags::$tags"
 
-      - name: Check environment variables
+      - name: Perform diff between releases
         run: |
-          echo "current_release=${{ env.current_release }}"
-          echo "previous_release=${{ env.previous_release }}"
-
-      - name: Get list of changed files
-        id: set-changed-files
-        run: |
-          if [ -z "${{ env.previous_release }}" ]; then
-            echo "No previous release found, skipping diff."
-            echo "changedfiles=[]" >> $GITHUB_OUTPUT
+          tags=(${ { steps.read_tags.outputs.tags } })
+          if [ ${ #tags[@] } -ge 2 ]; then
+            echo "Comparing ${tags[0]} and ${tags[1]}"
+            git diff ${tags[0]} ${tags[1]} > diff.txt
+            cat diff.txt
           else
-            # Get the commit hashes for the previous and current releases
-            PREV_COMMIT=$(gh release view ${{ env.previous_release }} --json targetCommitish --jq '.targetCommitish')
-            CURRENT_COMMIT=$(gh release view ${{ env.current_release }} --json targetCommitish --jq '.targetCommitish')
-
-            # Perform the diff
-            changedfiles=$(git diff --name-only $PREV_COMMIT $CURRENT_COMMIT | uniq | jq -R -s -c 'split("\n")[:-1]')
-            echo "changedfiles=$changedfiles" >> $GITHUB_OUTPUT
+            echo "Not enough tags to perform a diff."
           fi
-
-      - name: Output changed files
-        run: |
-          echo "Changed files between ${{ env.previous_release }} and ${{ env.current_release }}: ${{ steps.set-changed-files.outputs.changedfiles }}"
