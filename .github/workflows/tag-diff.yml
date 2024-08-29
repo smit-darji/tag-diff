@@ -32,4 +32,5 @@ jobs:
           echo "changedfiles=$changedfiles" >> $GITHUB_OUTPUT
 
       - name: Output changed files
-        run: echo "Changed files: ${{ steps.set-changed-files.outputs.changedfiles }}"
+        run: |
+          echo "Changed files: ${{ steps.set-changed-files.outputs.changedfiles }}"
