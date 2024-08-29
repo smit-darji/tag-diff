@@ -33,12 +33,19 @@ jobs:
       - name: Get latest and previous release tags
         id: get_tags
         run: |
-            latest_tag=$(gh release list | awk 'NR==1 {print $3}')
-            previous_tag=$(gh release list | awk 'NR==2 {print $2}')
-            echo "Latest release tag is: $latest_tag"
-            echo "Previous release tag is: $previous_tag"
-            echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
-            echo "PREVIOUS_TAG=$previous_tag" >> $GITHUB_ENV
+            gh release list --limit 1000 | awk 'NR > 1 {print $1 "\t" $2 "\t" $3}' | jq -R -s -c '
+            split("\n") | .[1:-1] | map(
+            {
+                tagName: split("\t")[0],
+                createdAt: split("\t")[1],
+                isDraft: split("\t")[2]
+            }
+            ) | map(select(.createdAt != null and .createdAt != "")) | sort_by(.createdAt) | reverse | 
+            . as $all | 
+            (.[0] | .status = "latest") as $latest | 
+            (.[1] | .status = "previous_latest") as $previous_latest |
+            [$latest, $previous_latest]'
+
       - name: Get list of changed files
         id: set-changed-files
         run: |
