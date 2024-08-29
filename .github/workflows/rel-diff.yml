@@ -23,36 +23,11 @@ jobs:
       - name: Authenticate GitHub CLI
         run: |
             gh auth login --with-token <<< "${{ secrets.TOKEN }}"
-            gh release list --json tagName
 
-      - name: Fetch release information
-        id: fetch_releases
+      - name: list release
         run: |
-          gh release list > tags.txt
+          gh release list
 
-      - name: Read release tags
-        id: read_tags
+      - name: Get letest and privious release List
         run: |
-          latest_tag=$(awk '{print $1}' tags.txt | head -n 1)
-          previous_tag=$(awk '{print $1}' tags.txt | head -n 2 | tail -n 1)
-          
-          echo "_______________________________"
-          echo "Latest Tag: $latest_tag"
-          echo "Previous Tag: $previous_tag"
-          echo "_______________________________"
-          
-          # Set environment variables
-          echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
-          echo "PREVIOUS_TAG=$previous_tag" >> $GITHUB_ENV
-
-
-    #   - name: Perform diff between releases
-    #     run: |
-    #       tags=(${ { steps.read_tags.outputs.tags } })
-    #       if [ ${ #tags[@] } -ge 2 ]; then
-    #         echo "Comparing ${tags[0]} and ${tags[1]}"
-    #         git diff ${tags[0]} ${tags[1]} > diff.txt
-    #         cat diff.txt
-    #       else
-    #         echo "Not enough tags to perform a diff."
-    #       fi
+          gh release list | awk 'NR==1 {latest=$0} NR==2 {previous=$0} END {print "Latest release: " latest "\nPrevious release: " previous}'
