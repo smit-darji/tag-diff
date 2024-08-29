@@ -1,0 +1,51 @@
+name: Published and Edited Diff Workflow
+
+on: 
+  release: 
+    types: [published, edited]
+    branches:
+      - Master
+  workflow_dispatch:
+
+jobs:
+  diff_published:
+    runs-on: ubuntu-latest
+    outputs:
+      changedfiles: ${{ steps.set-changed-files.outputs.changedfiles }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all tags and history
+
+      - name: Get the current release tag
+        id: get_current_release
+        run: |
+          CURRENT_RELEASE=${GITHUB_REF#refs/tags/}
+          echo "current_release=$CURRENT_RELEASE" >> $GITHUB_ENV
+          echo "Current Release is: $CURRENT_RELEASE"
+
+      - name: Fetch all tags and releases
+        run: git fetch --tags
+
+      - name: Get the previous release tag
+        id: get_previous_release
+        run: |
+          PREVIOUS_RELEASE=$(git tag --sort=-creatordate | grep -v "${{ env.current_release }}" | head -n 1)
+          echo "previous_release=$PREVIOUS_RELEASE" >> $GITHUB_ENV
+          echo "Previous Release is: $PREVIOUS_RELEASE"
+
+      - name: Get list of changed files
+        id: set-changed-files
+        run: |
+          if [ -z "${{ env.previous_release }}" ]; then
+            echo "No previous release found, skipping diff."
+            echo "changedfiles=[]" >> $GITHUB_OUTPUT
+          else
+            changedfiles=$(git diff --name-only --diff-filter=ACMRT ${{ env.previous_release }} ${{ env.current_release }} | uniq | jq -R -s -c 'split("\n")[:-1]')
+            echo "changedfiles=$changedfiles" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Output changed files
+        run: |
+          echo "Changed files between ${{ env.previous_release }} and ${{ env.current_release }}: ${{ steps.set-changed-files.outputs.changedfiles }}"
