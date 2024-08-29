@@ -35,8 +35,8 @@ jobs:
         run: |
             latest_tag=$(gh release list | awk 'NR==1')
             previous_tag=$(gh release list | awk 'NR==2')
-            echo "Latest release tag is: $latest_tag"
-            echo "Previous release tag is: $previous_tag"
+            echo "Latest release tag is: $latest_tag | awk '{print $(NF-2)}'"
+            echo "Previous release tag is: $previous_tag | awk '{print $(NF-2)}'"
             echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
             echo "PREVIOUS_TAG=$previous_tag" >> $GITHUB_ENV
       
