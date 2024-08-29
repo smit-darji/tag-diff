@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+
 jobs:
   diff_between_tags:
     runs-on: ubuntu-latest
@@ -22,6 +23,8 @@ jobs:
           LAST_TWO_TAGS=$(git tag --sort=-creatordate | head -n 2)
           NEW_TAG=$(echo "$LAST_TWO_TAGS" | head -n 1)
           PREVIOUS_TAG=$(echo "$LAST_TWO_TAGS" | tail -n 1)
+          echo "$NEW_TAG"
+          echo "=$PREVIOUS_TAG"
           echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
           echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_ENV
 
@@ -33,4 +36,4 @@ jobs:
 
       - name: Output changed files
         run: |
-          echo "Changed files: ${{ steps.set-changed-files.outputs.changedfiles }}"
+          echo "Changed files between ${{ env.previous_tag }} and ${{ env.new_tag }}: ${{ steps.set-changed-files.outputs.changedfiles }}"
