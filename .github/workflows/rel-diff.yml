@@ -28,7 +28,7 @@ jobs:
       - name: Fetch release information
         id: fetch_releases
         run: |
-          gh release list --json tagName --jq '.[] | .tagName' > tags.txt
+          gh release list > tags.txt
 
       - name: Read release tags
         id: read_tags
