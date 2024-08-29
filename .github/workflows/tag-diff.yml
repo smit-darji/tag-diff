@@ -8,6 +8,8 @@ on:
 jobs:
   diff_between_tags:
     runs-on: ubuntu-latest
+    outputs:
+      changedfiles: ${{ steps.set-changed-files.outputs.changedfiles }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
