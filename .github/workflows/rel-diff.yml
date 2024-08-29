@@ -23,7 +23,7 @@ jobs:
       - name: Authenticate GitHub CLI
         run: |
             gh auth login --with-token <<< "${{ secrets.TOKEN }}"
-            gh release list
+            gh release list --json tagName
 
       - name: Fetch release information
         id: fetch_releases
