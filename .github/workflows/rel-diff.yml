@@ -17,17 +17,20 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all tags and history
 
-      - name: Get the current release information
+      - name: Get the current release tag
         id: get_current_release
         run: |
-          CURRENT_RELEASE=${{ github.event.release.tag_name }}
+          CURRENT_RELEASE=${GITHUB_REF#refs/tags/}
           echo "current_release=$CURRENT_RELEASE" >> $GITHUB_ENV
           echo "Current Release is: $CURRENT_RELEASE"
 
-      - name: Get previous release
+      - name: Fetch all tags and releases
+        run: git fetch --tags
+
+      - name: Get the previous release tag
         id: get_previous_release
         run: |
-          PREVIOUS_RELEASE=$(gh release list --json tagName,createdAt --jq '.[] | select(.tagName != "${{ env.current_release }}") | .tagName' | head -n 1)
+          PREVIOUS_RELEASE=$(git tag --sort=-creatordate | grep -v "${{ env.current_release }}" | head -n 1)
           echo "previous_release=$PREVIOUS_RELEASE" >> $GITHUB_ENV
           echo "Previous Release is: $PREVIOUS_RELEASE"
 
@@ -38,11 +41,7 @@ jobs:
             echo "No previous release found, skipping diff."
             echo "changedfiles=[]" >> $GITHUB_OUTPUT
           else
-            # Get the commits for the previous and current releases
-            PREV_COMMIT=$(gh release view ${{ env.previous_release }} --json targetCommitish -q ".targetCommitish")
-            CURRENT_COMMIT=$(gh release view ${{ env.current_release }} --json targetCommitish -q ".targetCommitish")
-            
-            changedfiles=$(git diff --name-only $PREV_COMMIT $CURRENT_COMMIT | uniq | jq -R -s -c 'split("\n")[:-1]')
+            changedfiles=$(git diff --name-only --diff-filter=ACMRT ${{ env.previous_release }} ${{ env.current_release }} | uniq | jq -R -s -c 'split("\n")[:-1]')
             echo "changedfiles=$changedfiles" >> $GITHUB_OUTPUT
           fi
 
