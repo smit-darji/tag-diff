@@ -42,10 +42,10 @@ jobs:
       - name: Get list of changed files
         id: set-changed-files
         run: |
-          changedfiles=$(git diff --name-only --diff-filter=ACMRT ${{ env.previous_tag }} ${{ env.new_tag }} | uniq | jq -R -s -c 'split("\n")[:-1]')
+          changedfiles=$(git diff --name-only --diff-filter=ACMRT ${{ env.previous_tag }} ${{ env.LATEST_TAG }} | uniq | jq -R -s -c 'split("\n")[:-1]')
           echo "changedfiles=$changedfiles" >> $GITHUB_OUTPUT
 
     
       - name: Output changed files
         run: |
-            echo "Changed files between ${{ env.previous_tag }} and ${{ env.new_tag }}: ${{ steps.set-changed-files.outputs.changedfiles }}"
+            echo "Changed files between ${{ env.previous_tag }} and ${{ env.LATEST_TAG }}: ${{ steps.set-changed-files.outputs.changedfiles }}"
