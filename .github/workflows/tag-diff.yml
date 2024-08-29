@@ -1,0 +1,35 @@
+name: Tag Diff Workflow
+
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  diff_between_tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all tags and history
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Get the last two tags
+        id: get_tags
+        run: |
+          LAST_TWO_TAGS=$(git tag --sort=-creatordate | head -n 2)
+          NEW_TAG=$(echo "$LAST_TWO_TAGS" | head -n 1)
+          PREVIOUS_TAG=$(echo "$LAST_TWO_TAGS" | tail -n 1)
+          echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_ENV
+
+      - name: Get list of changed files
+        id: set-changed-files
+        run: |
+          changedfiles=$(git diff --name-only --diff-filter=ACMRT ${{ env.previous_tag }} ${{ env.new_tag }} | uniq | jq -R -s -c 'split("\n")[:-1]' | jq -r '.[] | ("./" + .)')
+          echo "changedfiles=$changedfiles" >> $GITHUB_OUTPUT
+
+      - name: Output changed files
+        run: echo "Changed files: ${{ steps.set-changed-files.outputs.changedfiles }}"
