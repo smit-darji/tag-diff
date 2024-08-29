@@ -9,6 +9,8 @@ on:
 jobs:
   diff_published:
     runs-on: ubuntu-latest
+    outputs:
+      changedfiles: ${{ steps.set-changed-files.outputs.changedfiles }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,6 +30,22 @@ jobs:
         run: |
           gh release list
 
-      - name: Get letest and privious release List
+      - name: Get latest and previous release tags
+        id: get_tags
         run: |
-          gh release list | awk 'NR==1 {latest=$0} NR==2 {previous=$0} END {print "Latest release: " latest "\nPrevious release: " previous}'
+            latest_tag=$(gh release list | awk 'NR==1 {print $3}')
+            previous_tag=$(gh release list | awk 'NR==2 {print $2}')
+            echo "Latest release tag is: $latest_tag"
+            echo "Previous release tag is: $previous_tag"
+            echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
+            echo "PREVIOUS_TAG=$previous_tag" >> $GITHUB_ENV
+      - name: Get list of changed files
+        id: set-changed-files
+        run: |
+          changedfiles=$(git diff --name-only --diff-filter=ACMRT ${{ env.previous_tag }} ${{ env.new_tag }} | uniq | jq -R -s -c 'split("\n")[:-1]')
+          echo "changedfiles=$changedfiles" >> $GITHUB_OUTPUT
+
+    
+      - name: Output changed files
+        run: |
+            echo "Changed files between ${{ env.previous_tag }} and ${{ env.new_tag }}: ${{ steps.set-changed-files.outputs.changedfiles }}"
