@@ -14,6 +14,13 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all tags and history
 
+      - name: Delete local tag if it exists
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          if git show-ref --tags | grep -q "refs/tags/$TAG_NAME$"; then
+            git tag -d $TAG_NAME
+          fi
+
       - name: Fetch all tags
         run: git fetch --tags
 
@@ -23,8 +30,6 @@ jobs:
           LAST_TWO_TAGS=$(git tag --sort=-creatordate | head -n 2)
           NEW_TAG=$(echo "$LAST_TWO_TAGS" | head -n 1)
           PREVIOUS_TAG=$(echo "$LAST_TWO_TAGS" | tail -n 1)
-          echo "$NEW_TAG"
-          echo "=$PREVIOUS_TAG"
           echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
           echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_ENV
 
