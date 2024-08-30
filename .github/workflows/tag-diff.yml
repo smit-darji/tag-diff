@@ -35,7 +35,7 @@ jobs:
           echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
           echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_ENV
           echo "New Tag is : $NEW_TAG"
-          echo  "Previous Tag is : $previous_tag"
+          echo  "Previous Tag is : $PREVIOUS_TAG"
 
       - name: Get list of changed files
         id: set-changed-files

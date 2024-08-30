@@ -37,16 +37,17 @@ jobs:
           previous_tag=$(gh release list | awk 'NR==2' | awk '{print $(NF-1)}')
           echo "Latest release tag is: $latest_tag"
           echo "Previous release tag is: $previous_tag"
-          echo "LATEST_TAG=$latest_tag" >> $GITHUB_ENV
-          echo "PREVIOUS_TAG=$previous_tag" >> $GITHUB_ENV
+          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+          echo "previous_tag=$previous_tag" >> $GITHUB_ENV
+          
 
       
       - name: Get list of changed files
         id: set-changed-files
         run: |
-          changedfiles=$(git diff --name-only --diff-filter=ACMRT ${{ env.previous_tag }} ${{ env.LATEST_TAG }} | uniq | jq -R -s -c 'split("\n")[:-1]')
+          changedfiles=$(git diff --name-only --diff-filter=ACMRT ${{ env.previous_tag }} ${{ env.latest_tag }} | uniq | jq -R -s -c 'split("\n")[:-1]')
           echo "changedfiles=$changedfiles" >> $GITHUB_OUTPUT
 
       - name: Output changed files
         run: |
-            echo "Changed files between ${{ env.previous_tag }} and ${{ env.new_tag }}: ${{ steps.set-changed-files.outputs.changedfiles }}"
+            echo "Changed files between ${{ env.previous_tag }} and ${{ env.latest_tag }}: ${{ steps.set-changed-files.outputs.changedfiles }}"
