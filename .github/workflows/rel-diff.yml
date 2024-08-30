@@ -50,4 +50,7 @@ jobs:
 
       - name: Output changed files
         run: |
-            echo "Changed files between ${{ env.previous_tag }} and ${{ env.latest_tag }}: ${{ steps.set-changed-files.outputs.changedfiles }}"
+          echo ""
+          echo ""
+          echo "Changed files between ${{ env.previous_tag }} and ${{ env.new_tag }}: "
+          echo "${{ steps.set-changed-files.outputs.changedfiles }}"
